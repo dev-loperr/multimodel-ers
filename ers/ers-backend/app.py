@@ -1,56 +1,75 @@
 from flask import Flask, request, jsonify
-from utils.model_service import biomedical_ner
+from utils.model1_app import process_text
+from utils.model2_app import process2_text
+from utils.model3_app import extractor
+from utils.model4_app import extract_terms
+from utils.model5_app import extract_entities
+from utils.model6_app import generate_text
+from utils.model7_app import extract_biobert_entities
+from utils.model8_app import entities_med
 
 app = Flask(__name__)
 app.config['MongoDB_Connection_String'] = ''
 
+@app.route("/process_text", methods=['POST', 'GET'])  # for model1_app, i.e. chemical-disease model
+def handle_text():
+    text = request.get_json().get("text")
+    entities = process_text(text)
+    return {"ans": entities}
+
+@app.route('/process2_text', methods=['POST'])  # for model2_app, i.e. jsylee/scibert_scivocab_uncased-finetuned-ner
+def process_text_endpoint():
+    data = request.get_json()
+    text = data.get('text', '')
+    entities = process2_text(text)
+    return jsonify(entities)
+
+@app.route('/extract_keyphrases', methods=['POST']) # for model3_app, i.e. keyphrase extraction
+def extract_keyphrases_endpoint():
+    data = request.get_json()
+    text = data.get('text', '')
+    keyphrases = extractor.extract_keyphrases(text)
+    return jsonify(keyphrases)
+
+@app.route('/extract_terms', methods=['POST']) # for model4_app, i.e. gliner 
+def extract_terms_endpoint():
+    data = request.get_json()
+    text = data.get('text', '')
+    labels = data.get('labels', ["CHEMICAL", "DISEASE"])
+    entities = extract_terms(text, labels)
+    return jsonify(entities)
+
+@app.route('/extract_entities', methods=['POST']) # for model5_app, i.e. fran-martinez/scibert_scivocab_cased_ner_jnlpba (not giving the desired output)
+def extract_entities_endpoint():
+    data = request.get_json()
+    text = data.get('text', '')
+    entities = extract_entities(text)
+    return jsonify(entities)
+
+@app.route('/generate_text', methods=['POST']) # for model6_app, i.e. gpt2
+def generate_text_endpoint():
+    data = request.get_json()
+    prompt = data.get('prompt', '')
+    generated_texts = generate_text(prompt)
+    return jsonify(generated_texts)
+
+@app.route('/extract_biobert_entities', methods=['POST']) # for model7_app, i.e. dmis-lab/biobert-v1.1
+def extract_biobert_entities_endpoint():
+    data = request.get_json()
+    text = data.get('text', '')
+    entities = extract_biobert_entities(text)
+    return jsonify(entities)
+
+@app.route('/entities_med', methods=['POST']) # for model8.py, i.e. dslim/bert-base-NER
+def entities_med_endpoint():
+    data = request.get_json()
+    text = data.get('text', '')
+    entities = entities_med(text)
+    return jsonify(entities)
 
 @app.route('/', methods=['POST', 'GET'])
 def index():
     return "ERS-Backend is up!"
-
-@app.route('/biomedical_ner', methods=['POST'])
-
-
-def model_use():
-    """
-    Performs biomedical NER on the provided text using the loaded model.
-
-    Expects a JSON request with the following structure:
-    ```json
-    {
-        "text": "Your text here"
-    }
-    ```
-
-    Returns a JSON response with the processed text and filtered entities.
-    """
-    # logging.info(f"Request: {request}")  # Log the request object for debugging
-
-    if not request.is_json:
-        return jsonify({"error": "Request must be JSON"}), 400
-
-    data = request.get_json()
-    text = data.get("text", 'None')
-
-    if not text:
-        return jsonify({"error": "Missing 'text' field in request body"}), 400
-
-    # Perform NER and filter entities
-    results = biomedical_ner(text)
-    filtered_entities = [entity for entity in results if entity['score'] > 0.1]  # Confidence threshold
-
-    # Ensure all entity scores are cast to float (JSON can't handle numpy.float32)
-    for entity in filtered_entities:
-        entity['score'] = float(entity['score'])  # Convert score to standard float
-
-    response = {
-        "text": text,
-        "entities": filtered_entities
-    }
-
-    return jsonify(response)
-
 
 if __name__ == "__main__":
     app.run(debug=True)
