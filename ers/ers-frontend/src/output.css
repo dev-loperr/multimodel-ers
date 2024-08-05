@@ -1,0 +1,131 @@
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  font-family: Arial, sans-serif;
+  background-color: #f0f0f0;
+  box-sizing: border-box;
+}
+  /* Container Styles */
+.container {
+  width: 100%;
+  max-width: 1200px; /* Fixed maximum width for desktop */
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* Center content vertically */
+  margin: 0 auto; /* Center container horizontally */
+} 
+
+
+  .logo-container {
+    display: flex;
+    align-items: center;
+  }
+  
+  .hexagon {
+    fill: #ffa500;
+  }
+  
+  .title {
+    color: #ffa500;
+    font-size: 24px;
+    margin: 0;
+  }
+  
+  /* Content Layout */
+.content {
+  display: flex;
+  gap: 20px;
+  width: 100%; /* Full width of the container */
+  max-width: 1200px; /* Ensure content does not exceed container width */
+  padding: 80px 20px 20px; /* Add padding for spacing and account for fixed header */
+  flex-grow: 1; /* Ensure content takes up remaining space */
+}
+
+  
+  .output-box, .entity-list {
+    padding: 20px;
+    border-radius: 10px;
+  }
+  
+  .output-box {
+    flex: 2;
+    background-color: #f2e8d5;
+  }
+  
+  .entity-list {
+    flex: 1;
+    background-color: #f2d5d5;
+  }
+  
+  h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+  }
+  
+  ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  li {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 10px;
+  }
+  
+  .line {
+    flex-grow: 1;
+    height: 1px;
+    background-color: #000;
+  }
+  
+  .red { background-color: #ff0000; }
+  .olive { background-color: #808000; }
+  .green { background-color: #008000; }
+  .teal { background-color: #008080; }
+  .blue { background-color: #0000ff; }
+  .purple { background-color: #800080; }
+
+  .logo {
+    width: 70px;
+    height: 70px;
+    margin-right: 10px;
+    animation: logo-spin infinite 5s linear;
+  }
+  
+  @keyframes logo-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Responsive Design for Smaller Screens */
+@media (max-width: 768px) {
+  .container {
+    padding: 10px; /* Add padding for smaller screens */
+  }
+
+  .content {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .output-box, .entity-list {
+    width: 100%;
+  }
+}
