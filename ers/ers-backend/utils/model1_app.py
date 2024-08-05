@@ -6,11 +6,16 @@ label_mapping = {
     "CHEMICAL": "Chemical Substances",
     "DISEASE": "Medical Conditions",
     "PER": "Person",
-    "LOC": "Location"
+    "LOC": "Location",
+    "MISC" : "Miscellaneous"
 }
 
 def convert_to_native(obj):
-    if isinstance(obj, np.integer):
+    if isinstance(obj, dict):
+        return {k: convert_to_native(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_to_native(i) for i in obj]
+    elif isinstance(obj, np.integer):
         return int(obj)
     elif isinstance(obj, np.floating):
         return float(obj)
@@ -21,17 +26,27 @@ def convert_to_native(obj):
 def process_text(text):
     ner_pipeline = pipeline(task="ner", model=model_checkpoint)
     results = ner_pipeline(text)
-    entities = []
+    
+    entity_groups = {}
     for result in results:
-        print(result)
+        label = label_mapping.get(result["entity"], result["entity"])
         entity = {
-            "text": "",
-            "label": label_mapping.get(result["entity"], result["entity"])
+            "text": result["word"],
+            "score": result["score"]
         }
-        if "score" in result:
-            entity["score"] = convert_to_native(result["score"])
         if "index" in result:
-            entity["index"] = convert_to_native(result["index"])
-        
-        entities.append(entity)
-    return entities
+            entity["index"] = result["index"]
+        if label not in entity_groups:
+            entity_groups[label] = []
+        entity_groups[label].append(entity)
+    
+    # Convert the dictionary to native Python types
+    native_entity_groups = convert_to_native(entity_groups)
+    
+    # Create the final output including entity groups
+    output = {
+        "entity_groups": list(native_entity_groups.keys()),
+        "entities": native_entity_groups
+    }
+    
+    return output
