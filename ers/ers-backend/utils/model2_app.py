@@ -2,9 +2,6 @@ from flask import Flask, request, jsonify
 from transformers import pipeline, AutoTokenizer, AutoModelForTokenClassification
 import numpy as np
 
-app = Flask(__name__)
-
-# Define the model checkpoint and label mapping
 model_checkpoint = "jsylee/scibert_scivocab_uncased-finetuned-ner"
 label_mapping = {
     "DRUG": "Chemical Substances",
@@ -14,7 +11,11 @@ label_mapping = {
 }
 
 def convert_to_native(obj):
-    if isinstance(obj, np.integer):
+    if isinstance(obj, dict):
+        return {k: convert_to_native(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_to_native(i) for i in obj]
+    elif isinstance(obj, np.integer):
         return int(obj)
     elif isinstance(obj, np.floating):
         return float(obj)
@@ -29,31 +30,27 @@ def process2_text(text):
     ner_pipeline = pipeline(task="ner", model=model, tokenizer=tokenizer, aggregation_strategy="simple")
     
     results = ner_pipeline(text)
-    entities = []
-    print(entities)
+    # Create a dictionary to store entities by their groups
+    entity_groups = {}
     for result in results:
+        label = model.config.id2label.get(result["entity_group"], result["entity_group"])
         entity = {
             "text": result["word"],
-            "label": label_mapping.get(result["entity_group"], result["entity_group"])
+            "score": result["score"]
         }
-        if "score" in result:
-            entity["score"] = convert_to_native(result["score"])
         if "index" in result:
-            entity["index"] = convert_to_native(result["index"])
-        
-        entities.append(entity)
-    return entities
-
-@app.route('/process2_text', methods=['POST'])
-def process_text_endpoint():
-    data = request.get_json()
-    text = data.get('text', '')
-    entities = process2_text(text)
-    return jsonify(entities)
-
-@app.route('/', methods=['POST', 'GET'])
-def index():
-    return "ERS-Backend is up!"
-
-if __name__ == "__main__":
-    app.run(debug=True)
+            entity["index"] = result["index"]
+        if label not in entity_groups:
+            entity_groups[label] = []
+        entity_groups[label].append(entity)
+    
+    # Convert the dictionary to native Python types
+    native_entity_groups = convert_to_native(entity_groups)
+    
+    # Create the final output including entity groups
+    output = {
+        "entity_groups": list(native_entity_groups.keys()),
+        "entities": native_entity_groups
+    }
+    
+    return output

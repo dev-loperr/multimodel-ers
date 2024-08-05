@@ -1,5 +1,6 @@
 from transformers import pipeline, AutoTokenizer, AutoModelForTokenClassification
-
+import numpy as np
+#TODO
 model_checkpoint = 'fran-martinez/scibert_scivocab_cased_ner_jnlpba'
 tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
 model = AutoModelForTokenClassification.from_pretrained(model_checkpoint)
@@ -15,12 +16,58 @@ nlp_ner = pipeline(
     aggregation_strategy="simple"
 )
 
+label_mapping = {
+    "PER": "Person",
+    "LOC": "Location",
+    "ORG": "Organization",
+    "DISEASE": "Medical Conditions",
+    "DRUG": "Drug",
+    "AE": "Adverse Effect",
+    "CHEMICAL": "Chemical Substances",
+    "DATE": "Date",
+    "MISC": "Miscellaneous"
+}
+
+def convert_to_native(obj):
+    if isinstance(obj, dict):
+        return {k: convert_to_native(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_to_native(i) for i in obj]
+    elif isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    return obj
+
 def extract_entities(text):
     lines = text.splitlines()
     entities = []
     for line in lines:
         result = nlp_ner(line)
-        print(f"Result for line '{line}': {result}")  # Debug print
         for entity in result:
             entities.append(entity)
-    return entities
+    
+    # Create a dictionary to store entities by their groups
+    entity_groups = {}
+    for entity in entities:
+        label = label_mapping.get(entity["entity_group"], entity["entity_group"])
+        entity_info = {
+            "text": entity["word"],
+            "score": entity["score"]
+        }
+        if "index" in entity:
+            entity_info["index"] = entity["index"]
+        if label not in entity_groups:
+            entity_groups[label] = []
+        entity_groups[label].append(entity_info)
+    
+    native_entity_groups = convert_to_native(entity_groups)
+    
+    output = {
+        "entity_groups": list(native_entity_groups.keys()),
+        "entities": native_entity_groups
+    }
+    
+    return output
