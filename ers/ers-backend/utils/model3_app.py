@@ -4,6 +4,8 @@ from transformers import (
     AutoTokenizer,
 )
 import numpy as np
+import logging
+#TODO
 
 def convert_to_native(obj):
     if isinstance(obj, dict):
@@ -49,33 +51,36 @@ class KeyphraseExtractionPipeline:
             aggregation_strategy="simple"
         )
 
-    def extract_keyphrases(self, text):
-        results = self.pipeline(text)
-        
-        # Create a dictionary to store entities by their groups
-        entity_groups = {}
-        for result in results:
-            label = label_mapping.get(result.get('entity_group', 'UNKNOWN'), 'UNKNOWN')
-            entity = {
-                'word': result.get('word', ''),
-                'score': convert_to_native(result.get('score', 0.0)),
-                'start': result.get('start', 0),
-                'end': result.get('end', 0)
+    def ml6team_keyphrase_extraction_kbir_inspec(self, text):  
+        try:
+            results = self.pipeline(text)
+            
+            # Create a dictionary to store entities by their groups
+            entity_groups = {}
+            for result in results:
+                label = label_mapping.get(result.get('entity'), 'Keyphrase')
+                entity = {
+                    'word': result.get('word', ''),
+                    'score': convert_to_native(result.get('score', 0.0)),
+                    'start': result.get('start', 0),
+                    'end': result.get('end', 0)
+                }
+                if label not in entity_groups:
+                    entity_groups[label] = []
+                entity_groups[label].append(entity)
+            
+            native_entity_groups = convert_to_native(entity_groups)
+            
+            output = {
+                "entity_groups": list(native_entity_groups.keys()),
+                "entities": native_entity_groups
             }
-            if label not in entity_groups:
-                entity_groups[label] = []
-            entity_groups[label].append(entity)
-        
-        # Convert the dictionary to native Python types
-        native_entity_groups = convert_to_native(entity_groups)
-        
-        # Create the final output including entity groups
-        output = {
-            "entity_groups": list(native_entity_groups.keys()),
-            "entities": native_entity_groups
-        }
-        
-        return output
+            
+            return output
+
+        except Exception as e:
+            logging.error(f"Pipeline error: {str(e)}")
+            return {"error": "The keyphrase extraction pipeline encountered an error and could not process the text."}
 
 # Define keyphrase extraction pipeline
 extractor = KeyphraseExtractionPipeline(model=model_checkpoint)

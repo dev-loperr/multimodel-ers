@@ -1,6 +1,7 @@
 import json
 from transformers import pipeline
 import numpy as np
+import logging
 
 ner_pipe = pipeline("ner", model="dslim/bert-base-NER")
 
@@ -34,10 +35,9 @@ def convert_to_native(obj):
         return obj.tolist()
     return obj
 
-def entities_med(text):
+def dslim_bert_base_NER(text):
     try:
-        predictions = ner_pipe(text)
-        #print(f"Predictions: {predictions}")  
+        predictions = ner_pipe(text)  
         entity_groups = {}
         for prediction in predictions:
             label = label_mapping.get(prediction['entity'], prediction['entity'])
@@ -50,17 +50,14 @@ def entities_med(text):
                 entity_groups[label] = []
             entity_groups[label].append(entity)
         
-        # Convert the dictionary to native Python types
         native_entity_groups = convert_to_native(entity_groups)
         
-        # Create the final output including entity groups
         output = {
             "entity_groups": list(native_entity_groups.keys()),
             "entities": native_entity_groups
         }
         
-        #print(f"Processed Predictions: {output}")  # Debugging: Print the processed predictions
         return output
     except Exception as e:
-        print(f"An error occurred: {e}")
-        return []
+        logging.error(f"Pipeline error: {str(e)}")
+        return {"error": "The BERT NER pipeline encountered an error and could not process the text."}

@@ -1,5 +1,6 @@
 from transformers import pipeline
 import numpy as np
+import logging
 
 model_checkpoint = "ghadeermobasher/BC5CDR-Chemical-Disease-balanced-scibert_scivocab_cased"
 label_mapping = {
@@ -7,7 +8,9 @@ label_mapping = {
     "DISEASE": "Medical Conditions",
     "PER": "Person",
     "LOC": "Location",
-    "MISC" : "Miscellaneous"
+    "MISC" : "Miscellaneous",
+    "PERSON": "Person",
+    "ORG": "Organization"
 }
 
 def convert_to_native(obj):
@@ -23,30 +26,33 @@ def convert_to_native(obj):
         return obj.tolist()
     return obj
 
-def process_text(text):
-    ner_pipeline = pipeline(task="ner", model=model_checkpoint)
-    results = ner_pipeline(text)
-    
-    entity_groups = {}
-    for result in results:
-        label = label_mapping.get(result["entity"], result["entity"])
-        entity = {
-            "text": result["word"],
-            "score": result["score"]
+def ghadeermobasher_BC5CDR_Chemical_Disease_balanced_scibert_scivocab_cased(text):
+    try:
+        ner_pipeline = pipeline(task="ner", model=model_checkpoint)
+        results = ner_pipeline(text)
+        
+        entity_groups = {}
+        for result in results:
+            label = label_mapping.get(result["entity"], result["entity"])
+            entity = {
+                "text": result["word"],
+                "score": result["score"]
+            }
+            if "index" in result:
+                entity["index"] = result["index"]
+            if label not in entity_groups:
+                entity_groups[label] = []
+            entity_groups[label].append(entity)
+        
+        native_entity_groups = convert_to_native(entity_groups)
+        
+        output = {
+            "entity_groups": list(native_entity_groups.keys()),
+            "entities": native_entity_groups
         }
-        if "index" in result:
-            entity["index"] = result["index"]
-        if label not in entity_groups:
-            entity_groups[label] = []
-        entity_groups[label].append(entity)
-    
-    # Convert the dictionary to native Python types
-    native_entity_groups = convert_to_native(entity_groups)
-    
-    # Create the final output including entity groups
-    output = {
-        "entity_groups": list(native_entity_groups.keys()),
-        "entities": native_entity_groups
-    }
-    
-    return output
+        
+        return output
+
+    except Exception as e:
+        logging.error(f"Pipeline error: {str(e)}")
+        return {"error": "The NER pipeline encountered an error and could not process the text."}
