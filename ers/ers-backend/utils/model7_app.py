@@ -1,7 +1,7 @@
 from transformers import pipeline
 import numpy as np
 # TODO
-# Load the BioBERT model for NER
+
 ner_model = pipeline("ner", model="dmis-lab/biobert-v1.1")
 
 label_mapping = {
@@ -34,7 +34,7 @@ def convert_to_native(obj):
         return obj.tolist()
     return obj
 
-def extract_biobert_entities(text):
+def biobert(text):
     predictions = ner_model(text)
     entity_groups = {}
     for prediction in predictions:
@@ -51,10 +51,8 @@ def extract_biobert_entities(text):
             entity_groups[label] = []
         entity_groups[label].append(entity)
     
-    # Convert the dictionary to native Python types
     native_entity_groups = convert_to_native(entity_groups)
     
-    # Create the final output including entity groups
     output = {
         "entity_groups": list(native_entity_groups.keys()),
         "entities": native_entity_groups

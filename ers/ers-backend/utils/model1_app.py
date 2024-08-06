@@ -7,7 +7,9 @@ label_mapping = {
     "DISEASE": "Medical Conditions",
     "PER": "Person",
     "LOC": "Location",
-    "MISC" : "Miscellaneous"
+    "MISC" : "Miscellaneous",
+    "PERSON": "Person",
+    "ORG": "Organization"
 }
 
 def convert_to_native(obj):
@@ -23,7 +25,7 @@ def convert_to_native(obj):
         return obj.tolist()
     return obj
 
-def process_text(text):
+def chemical_disease_text(text):
     ner_pipeline = pipeline(task="ner", model=model_checkpoint)
     results = ner_pipeline(text)
     
@@ -40,10 +42,8 @@ def process_text(text):
             entity_groups[label] = []
         entity_groups[label].append(entity)
     
-    # Convert the dictionary to native Python types
     native_entity_groups = convert_to_native(entity_groups)
     
-    # Create the final output including entity groups
     output = {
         "entity_groups": list(native_entity_groups.keys()),
         "entities": native_entity_groups

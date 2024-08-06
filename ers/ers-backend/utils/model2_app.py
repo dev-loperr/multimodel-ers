@@ -7,7 +7,12 @@ label_mapping = {
     "DRUG": "Chemical Substances",
     "ADVERSE EFFECT": "Medical Conditions",
     "PER": "Person",
-    "LOC": "Location"
+    "LOC": "Location",
+    "DATE": "Date",
+    "ORG": "Organization",
+    "CHEMICAL": "Chemical",
+    "DISEASE": "Disease",
+    "MISC": "Miscellaneous"
 }
 
 def convert_to_native(obj):
@@ -23,8 +28,7 @@ def convert_to_native(obj):
         return obj.tolist()
     return obj
 
-def process2_text(text):
-    # Load the model and tokenizer
+def jsylee(text):
     tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
     model = AutoModelForTokenClassification.from_pretrained(model_checkpoint, num_labels=5, id2label={0: 'O', 1: 'DRUG', 2: 'DRUG', 3: 'ADVERSE EFFECT', 4: 'ADVERSE EFFECT'})
     ner_pipeline = pipeline(task="ner", model=model, tokenizer=tokenizer, aggregation_strategy="simple")
@@ -44,10 +48,8 @@ def process2_text(text):
             entity_groups[label] = []
         entity_groups[label].append(entity)
     
-    # Convert the dictionary to native Python types
     native_entity_groups = convert_to_native(entity_groups)
     
-    # Create the final output including entity groups
     output = {
         "entity_groups": list(native_entity_groups.keys()),
         "entities": native_entity_groups

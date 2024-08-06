@@ -17,8 +17,8 @@ def convert_to_native(obj):
         return obj.tolist()
     return obj
 
-def extract_terms(text):
-    labels = ["CHEMICAL", "DISEASE", "PERSON", "LOCATION", "DATE", "ORGANIZATION", "MISC", "DRUG", "ADVERSE EFFECT"]  # Define labels directly in the model file
+def gliner(text):
+    labels = ["CHEMICAL", "DISEASE", "PERSON", "LOCATION", "DATE", "ORGANIZATION", "MISC", "DRUG", "ADVERSE EFFECT"]  
     results = model.predict_entities(text, labels)
     
     # Create a dictionary to store entities by their groups
@@ -35,10 +35,8 @@ def extract_terms(text):
             entity_groups[label] = []
         entity_groups[label].append(entity)
     
-    # Convert the dictionary to native Python types
     native_entity_groups = convert_to_native(entity_groups)
     
-    # Create the final output including entity groups
     output = {
         "entity_groups": list(native_entity_groups.keys()),
         "entities": native_entity_groups

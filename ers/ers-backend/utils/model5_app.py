@@ -41,7 +41,7 @@ def convert_to_native(obj):
         return obj.tolist()
     return obj
 
-def extract_entities(text):
+def fran_martinez(text):
     lines = text.splitlines()
     entities = []
     for line in lines:

@@ -4,6 +4,7 @@ from transformers import (
     AutoTokenizer,
 )
 import numpy as np
+#TODO
 
 def convert_to_native(obj):
     if isinstance(obj, dict):
@@ -49,13 +50,13 @@ class KeyphraseExtractionPipeline:
             aggregation_strategy="simple"
         )
 
-    def extract_keyphrases(self, text):
+    def keyphrases(self, text):
         results = self.pipeline(text)
         
         # Create a dictionary to store entities by their groups
         entity_groups = {}
         for result in results:
-            label = label_mapping.get(result.get('entity_group', 'UNKNOWN'), 'UNKNOWN')
+            label = label_mapping.get(result.get('entity'), 'Keyphrase')
             entity = {
                 'word': result.get('word', ''),
                 'score': convert_to_native(result.get('score', 0.0)),
@@ -66,10 +67,8 @@ class KeyphraseExtractionPipeline:
                 entity_groups[label] = []
             entity_groups[label].append(entity)
         
-        # Convert the dictionary to native Python types
         native_entity_groups = convert_to_native(entity_groups)
         
-        # Create the final output including entity groups
         output = {
             "entity_groups": list(native_entity_groups.keys()),
             "entities": native_entity_groups

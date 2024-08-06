@@ -1,16 +1,24 @@
 from flask import Flask, request, jsonify
-from utils.model1_app import process_text
-from utils.model2_app import process2_text
+from utils.model1_app import chemical_disease_text
+from utils.model2_app import jsylee
 from utils.model3_app import extractor
-from utils.model4_app import extract_terms
-from utils.model5_app import extract_entities
-from utils.model6_app import generate_text
-from utils.model7_app import extract_biobert_entities
-from utils.model8_app import entities_med
+from utils.model4_app import gliner
+from utils.model5_app import fran_martinez
+from utils.model6_app import gpt2
+from utils.model7_app import biobert
+from utils.model8_app import bert_base
 import numpy as np
+import logging
 
 app = Flask(__name__)
 app.config['MongoDB_Connection_String'] = ''
+
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s %(levelname)s %(message)s',
+                    handlers=[
+                        logging.FileHandler("app.log"),
+                        logging.StreamHandler()
+                    ])
 
 def convert_to_native(obj):
     if isinstance(obj, dict):
@@ -25,61 +33,164 @@ def convert_to_native(obj):
         return obj.tolist()
     return obj
 
-@app.route("/process_text", methods=['POST', 'GET'])  # for model1_app, i.e. chemical-disease model
-def handle_text():
-    text = request.get_json().get("text")
-    entities = process_text(text)
-    return jsonify(entities)
+@app.errorhandler(Exception)
+def handle_exception(e):
+    logging.error(f"Unhandled exception: {str(e)}")
+    return jsonify({"error": "An unexpected error occurred"}), 500
 
-@app.route('/process2_text', methods=['POST'])  # for model2_app, i.e. jsylee/scibert_scivocab_uncased-finetuned-ner
-def process_text_endpoint():
-    data = request.get_json()
-    text = data.get('text', '')
-    entities = process2_text(text)
-    native_entities = convert_to_native(entities)
-    return jsonify(native_entities)
+@app.errorhandler(404)
+def handle_404(e):
+    return jsonify({"error": "Resource not found"}), 404
 
-@app.route('/extract_keyphrases', methods=['POST']) # for model3_app, i.e. keyphrase extraction
-def extract_keyphrases_endpoint():
-    data = request.get_json()
-    text = data.get('text', '')
-    keyphrases = extractor.extract_keyphrases(text)
-    return jsonify(convert_to_native(keyphrases))
+@app.errorhandler(400)
+def handle_400(e):
+    logging.info(f"Bad request: {str(e)}")
+    return jsonify({"error": "Bad request"}), 400
 
-@app.route('/extract_terms', methods=['POST']) # for model4_app, i.e. gliner 
-def extract_terms_endpoint():
-    data = request.get_json()
-    text = data.get('text', '')
-    entities = extract_terms(text)
-    return jsonify(convert_to_native(entities))
 
-@app.route('/extract_entities', methods=['POST']) # for model5_app, i.e. fran-martinez/scibert_scivocab_cased_ner_jnlpba (not giving the desired output)
-def extract_entities_endpoint():
-    data = request.get_json()
-    text = data.get('text', '')
-    entities = extract_entities(text)
-    return jsonify(convert_to_native(entities))
+@app.route("/chemical_disease", methods=['POST', 'GET'])
+def chemical_disease_endpoint():
+    try:
+        text = request.get_json().get("text")
+        if not text:
+            raise ValueError("Invalid input: 'text' field is required")
+        entities = chemical_disease_text(text)
+        return jsonify(entities)
+    except ValueError as e:
+        logging.info(f"Bad request: {str(e)}")
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        logging.error(f"Error processing text: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        logging.info("Model chemical_disease has run")
 
-@app.route('/generate_text', methods=['POST']) # for model6_app, i.e. gpt2
-def generate_text_endpoint():
-    data = request.get_json()
-    prompt = data.get('prompt', '')
-    generated_texts = generate_text(prompt)
-    return jsonify(convert_to_native(generated_texts))
+@app.route('/jsylee', methods=['POST'])
+def jsylee_endpoint():
+    try:
+        data = request.get_json()
+        text = data.get('text', '')
+        if not text:
+            raise ValueError("Invalid input: 'text' field is required")
+        entities = jsylee(text)
+        native_entities = convert_to_native(entities)
+        return jsonify(native_entities)
+    except ValueError as e:
+        logging.info(f"Bad request: {str(e)}")
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        logging.error(f"Error processing text: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        logging.info("Model jsylee has run")
 
-@app.route('/extract_biobert_entities', methods=['POST']) # for model7_app, i.e. dmis-lab/biobert-v1.1
-def extract_biobert_entities_endpoint():
-    data = request.get_json()
-    text = data.get('text', '')
-    entities = extract_biobert_entities(text)
-    return jsonify(convert_to_native(entities))
+@app.route('/keyphrases', methods=['POST'])
+def keyphrases_endpoint():
+    try:
+        data = request.get_json()
+        text = data.get('text', '')
+        if not text:
+            raise ValueError("Invalid input: 'text' field is required")
+        keyphrases = extractor.keyphrases(text)
+        return jsonify(convert_to_native(keyphrases))
+    except ValueError as e:
+        logging.info(f"Bad request: {str(e)}")
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        logging.error(f"Error extracting keyphrases: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        logging.info("Model keyphrases has run")
 
-@app.route('/entities_med', methods=['POST']) # for model8.py, i.e. dslim/bert-base-NER
-def entities_med_endpoint():
-    data = request.get_json()
-    text = data.get('text', '')
-    entities = entities_med(text)
-    return jsonify(convert_to_native(entities))
+@app.route('/gliner', methods=['POST'])
+def gliner_endpoint():
+    try:
+        data = request.get_json()
+        text = data.get('text', '')
+        if not text:
+            raise ValueError("Invalid input: 'text' field is required")
+        entities = gliner(text)
+        return jsonify(convert_to_native(entities))
+    except ValueError as e:
+        logging.info(f"Bad request: {str(e)}")
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        logging.error(f"Error extracting terms: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        logging.info("Model gliner has run")
+
+@app.route('/fran_martinez', methods=['POST'])
+def fran_martinez_endpoint():
+    try:
+        data = request.get_json()
+        text = data.get('text', '')
+        if not text:
+            raise ValueError("Invalid input: 'text' field is required")
+        entities = fran_martinez(text)
+        return jsonify(convert_to_native(entities))
+    except ValueError as e:
+        logging.info(f"Bad request: {str(e)}")
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        logging.error(f"Error extracting entities: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        logging.info("Model fran-martinez has run")
+
+@app.route('/gpt2', methods=['POST'])
+def gpt2_endpoint():
+    try:
+        data = request.get_json()
+        prompt = data.get('prompt', '')
+        if not prompt:
+            raise ValueError("Invalid input: 'prompt' field is required")
+        generated_texts = gpt2(prompt)
+        return jsonify(convert_to_native(generated_texts))
+    except ValueError as e:
+        logging.info(f"Bad request: {str(e)}")
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        logging.error(f"Error generating text: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        logging.info("Model gpt2 has run")
+
+@app.route('/biobert', methods=['POST'])
+def biobert_endpoint():
+    try:
+        data = request.get_json()
+        text = data.get('text', '')
+        if not text:
+            raise ValueError("Invalid input: 'text' field is required")
+        entities = biobert(text)
+        return jsonify(convert_to_native(entities))
+    except ValueError as e:
+        logging.info(f"Bad request: {str(e)}")
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        logging.error(f"Error extracting BioBERT entities: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        logging.info("Model biobert has run") 
+
+@app.route('/bert_base', methods=['POST'])
+def bert_base_endpoint():
+    try:
+        data = request.get_json()
+        text = data.get('text', '')
+        if not text:
+            raise ValueError("Invalid input: 'text' field is required")
+        entities = bert_base(text)
+        return jsonify(convert_to_native(entities))
+    except ValueError as e:
+        logging.info(f"Bad request: {str(e)}")
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        logging.error(f"Error extracting medical entities: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        logging.info("Model bert-base has run") 
 
 @app.route('/', methods=['POST', 'GET'])
 def index():
