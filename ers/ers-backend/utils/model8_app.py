@@ -1,6 +1,7 @@
 import json
 from transformers import pipeline
 import numpy as np
+import logging
 
 ner_pipe = pipeline("ner", model="dslim/bert-base-NER")
 
@@ -34,7 +35,7 @@ def convert_to_native(obj):
         return obj.tolist()
     return obj
 
-def bert_base(text):
+def dslim_bert_base_NER(text):
     try:
         predictions = ner_pipe(text)  
         entity_groups = {}
@@ -58,5 +59,5 @@ def bert_base(text):
         
         return output
     except Exception as e:
-        print(f"An error occurred: {e}")
-        return []
+        logging.error(f"Pipeline error: {str(e)}")
+        return {"error": "The BERT NER pipeline encountered an error and could not process the text."}

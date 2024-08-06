@@ -1,5 +1,6 @@
 from transformers import pipeline
 import numpy as np
+import logging
 # TODO
 
 ner_model = pipeline("ner", model="dmis-lab/biobert-v1.1")
@@ -34,28 +35,33 @@ def convert_to_native(obj):
         return obj.tolist()
     return obj
 
-def biobert(text):
-    predictions = ner_model(text)
-    entity_groups = {}
-    for prediction in predictions:
-        label = label_mapping.get(prediction['entity'], prediction['entity'])
-        entity = {
-            'entity': label,
-            'score': convert_to_native(prediction['score']),
-            'index': prediction['index'],
-            'start': prediction['start'],
-            'end': prediction['end'],
-            'word': prediction['word']
+def dmis_lab_biobert_v1_1(text):
+    try:
+        predictions = ner_model(text)
+        entity_groups = {}
+        for prediction in predictions:
+            label = label_mapping.get(prediction['entity'], prediction['entity'])
+            entity = {
+                'entity': label,
+                'score': convert_to_native(prediction['score']),
+                'index': prediction['index'],
+                'start': prediction['start'],
+                'end': prediction['end'],
+                'word': prediction['word']
+            }
+            if label not in entity_groups:
+                entity_groups[label] = []
+            entity_groups[label].append(entity)
+        
+        native_entity_groups = convert_to_native(entity_groups)
+        
+        output = {
+            "entity_groups": list(native_entity_groups.keys()),
+            "entities": native_entity_groups
         }
-        if label not in entity_groups:
-            entity_groups[label] = []
-        entity_groups[label].append(entity)
-    
-    native_entity_groups = convert_to_native(entity_groups)
-    
-    output = {
-        "entity_groups": list(native_entity_groups.keys()),
-        "entities": native_entity_groups
-    }
-    
-    return output
+        
+        return output
+
+    except Exception as e:
+        logging.error(f"Pipeline error: {str(e)}")
+        return {"error": "The BioBERT NER pipeline encountered an error and could not process the text."}

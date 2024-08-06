@@ -1,12 +1,12 @@
 from flask import Flask, request, jsonify
-from utils.model1_app import chemical_disease_text
-from utils.model2_app import jsylee
+from utils.model1_app import ghadeermobasher_BC5CDR_Chemical_Disease_balanced_scibert_scivocab_cased
+from utils.model2_app import jsylee_scibert_scivocab_uncased_finetuned_ner
 from utils.model3_app import extractor
-from utils.model4_app import gliner
-from utils.model5_app import fran_martinez
-from utils.model6_app import gpt2
-from utils.model7_app import biobert
-from utils.model8_app import bert_base
+from utils.model4_app import EmergentMethods_gliner_medium_news_v2_1
+from utils.model5_app import fran_martinez_scibert_scivocab_cased_ner_jnlpba
+from utils.model6_app import openai_community_gpt2
+from utils.model7_app import dmis_lab_biobert_v1_1
+from utils.model8_app import dslim_bert_base_NER
 import numpy as np
 import logging
 
@@ -48,13 +48,13 @@ def handle_400(e):
     return jsonify({"error": "Bad request"}), 400
 
 
-@app.route("/chemical_disease", methods=['POST', 'GET'])
-def chemical_disease_endpoint():
+@app.route("/ghadeermobasher_BC5CDR_Chemical_Disease_balanced_scibert_scivocab_cased", methods=['POST', 'GET'])
+def ghadeermobasher_BC5CDR_Chemical_Disease_balanced_scibert_scivocab_cased_endpoint():
     try:
         text = request.get_json().get("text")
         if not text:
             raise ValueError("Invalid input: 'text' field is required")
-        entities = chemical_disease_text(text)
+        entities = ghadeermobasher_BC5CDR_Chemical_Disease_balanced_scibert_scivocab_cased(text)
         return jsonify(entities)
     except ValueError as e:
         logging.info(f"Bad request: {str(e)}")
@@ -63,16 +63,16 @@ def chemical_disease_endpoint():
         logging.error(f"Error processing text: {str(e)}")
         return jsonify({"error": str(e)}), 500
     finally:
-        logging.info("Model chemical_disease has run")
+        logging.info("Model ghadeermobasher_BC5CDR_Chemical_Disease_balanced_scibert_scivocab_cased has run")
 
-@app.route('/jsylee', methods=['POST'])
-def jsylee_endpoint():
+@app.route('/jsylee_scibert_scivocab_uncased_finetuned_ner', methods=['POST'])
+def jsylee_scibert_scivocab_uncased_finetuned_ner_endpoint():
     try:
         data = request.get_json()
         text = data.get('text', '')
         if not text:
             raise ValueError("Invalid input: 'text' field is required")
-        entities = jsylee(text)
+        entities = jsylee_scibert_scivocab_uncased_finetuned_ner(text)
         native_entities = convert_to_native(entities)
         return jsonify(native_entities)
     except ValueError as e:
@@ -82,16 +82,16 @@ def jsylee_endpoint():
         logging.error(f"Error processing text: {str(e)}")
         return jsonify({"error": str(e)}), 500
     finally:
-        logging.info("Model jsylee has run")
+        logging.info("Model jsylee_scibert_scivocab_uncased_finetuned_ner has run")
 
-@app.route('/keyphrases', methods=['POST'])
-def keyphrases_endpoint():
+@app.route('/ml6team_keyphrase_extraction_kbir_inspec', methods=['POST'])
+def ml6team_keyphrase_extraction_kbir_inspec_endpoint():
     try:
         data = request.get_json()
         text = data.get('text', '')
         if not text:
             raise ValueError("Invalid input: 'text' field is required")
-        keyphrases = extractor.keyphrases(text)
+        keyphrases = extractor.ml6team_keyphrase_extraction_kbir_inspec(text)
         return jsonify(convert_to_native(keyphrases))
     except ValueError as e:
         logging.info(f"Bad request: {str(e)}")
@@ -100,16 +100,16 @@ def keyphrases_endpoint():
         logging.error(f"Error extracting keyphrases: {str(e)}")
         return jsonify({"error": str(e)}), 500
     finally:
-        logging.info("Model keyphrases has run")
+        logging.info("Model ml6team_keyphrase_extraction_kbir_inspec has run")
 
-@app.route('/gliner', methods=['POST'])
-def gliner_endpoint():
+@app.route('/EmergentMethods_gliner_medium_news_v2_1', methods=['POST'])
+def EmergentMethods_gliner_medium_news_v2_1_endpoint():
     try:
         data = request.get_json()
         text = data.get('text', '')
         if not text:
             raise ValueError("Invalid input: 'text' field is required")
-        entities = gliner(text)
+        entities = EmergentMethods_gliner_medium_news_v2_1(text)
         return jsonify(convert_to_native(entities))
     except ValueError as e:
         logging.info(f"Bad request: {str(e)}")
@@ -118,16 +118,16 @@ def gliner_endpoint():
         logging.error(f"Error extracting terms: {str(e)}")
         return jsonify({"error": str(e)}), 500
     finally:
-        logging.info("Model gliner has run")
+        logging.info("Model EmergentMethods_gliner_medium_news_v2_1 has run")
 
-@app.route('/fran_martinez', methods=['POST'])
-def fran_martinez_endpoint():
+@app.route('/fran_martinez_scibert_scivocab_cased_ner_jnlpba', methods=['POST'])
+def fran_martinez_scibert_scivocab_cased_ner_jnlpba_endpoint():
     try:
         data = request.get_json()
         text = data.get('text', '')
         if not text:
             raise ValueError("Invalid input: 'text' field is required")
-        entities = fran_martinez(text)
+        entities = fran_martinez_scibert_scivocab_cased_ner_jnlpba(text)
         return jsonify(convert_to_native(entities))
     except ValueError as e:
         logging.info(f"Bad request: {str(e)}")
@@ -136,16 +136,16 @@ def fran_martinez_endpoint():
         logging.error(f"Error extracting entities: {str(e)}")
         return jsonify({"error": str(e)}), 500
     finally:
-        logging.info("Model fran-martinez has run")
+        logging.info("Model fran_martinez_scibert_scivocab_cased_ner_jnlpba has run")
 
-@app.route('/gpt2', methods=['POST'])
-def gpt2_endpoint():
+@app.route('/openai_community_gpt2', methods=['POST'])
+def openai_community_gpt2_endpoint():
     try:
         data = request.get_json()
         prompt = data.get('prompt', '')
         if not prompt:
             raise ValueError("Invalid input: 'prompt' field is required")
-        generated_texts = gpt2(prompt)
+        generated_texts = openai_community_gpt2(prompt)
         return jsonify(convert_to_native(generated_texts))
     except ValueError as e:
         logging.info(f"Bad request: {str(e)}")
@@ -154,16 +154,16 @@ def gpt2_endpoint():
         logging.error(f"Error generating text: {str(e)}")
         return jsonify({"error": str(e)}), 500
     finally:
-        logging.info("Model gpt2 has run")
+        logging.info("Model openai_community_gpt2 has run")
 
-@app.route('/biobert', methods=['POST'])
-def biobert_endpoint():
+@app.route('/dmis_lab_biobert_v1_1', methods=['POST'])
+def dmis_lab_biobert_v1_1_endpoint():
     try:
         data = request.get_json()
         text = data.get('text', '')
         if not text:
             raise ValueError("Invalid input: 'text' field is required")
-        entities = biobert(text)
+        entities = dmis_lab_biobert_v1_1(text)
         return jsonify(convert_to_native(entities))
     except ValueError as e:
         logging.info(f"Bad request: {str(e)}")
@@ -172,16 +172,16 @@ def biobert_endpoint():
         logging.error(f"Error extracting BioBERT entities: {str(e)}")
         return jsonify({"error": str(e)}), 500
     finally:
-        logging.info("Model biobert has run") 
+        logging.info("Model dmis_lab_biobert_v1_1 has run") 
 
-@app.route('/bert_base', methods=['POST'])
-def bert_base_endpoint():
+@app.route('/dslim_bert_base_NER', methods=['POST'])
+def dslim_bert_base_NER_endpoint():
     try:
         data = request.get_json()
         text = data.get('text', '')
         if not text:
             raise ValueError("Invalid input: 'text' field is required")
-        entities = bert_base(text)
+        entities = dslim_bert_base_NER(text)
         return jsonify(convert_to_native(entities))
     except ValueError as e:
         logging.info(f"Bad request: {str(e)}")
@@ -190,7 +190,7 @@ def bert_base_endpoint():
         logging.error(f"Error extracting medical entities: {str(e)}")
         return jsonify({"error": str(e)}), 500
     finally:
-        logging.info("Model bert-base has run") 
+        logging.info("Model dslim_bert_base_NER has run") 
 
 @app.route('/', methods=['POST', 'GET'])
 def index():
