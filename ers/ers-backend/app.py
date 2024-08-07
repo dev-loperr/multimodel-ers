@@ -1,12 +1,12 @@
 from flask import Flask, request, jsonify
-from utils.model1_app import ghadeermobasher_BC5CDR_Chemical_Disease_balanced_scibert_scivocab_cased
-from utils.model2_app import jsylee_scibert_scivocab_uncased_finetuned_ner
-from utils.model3_app import extractor
-from utils.model4_app import EmergentMethods_gliner_medium_news_v2_1
-from utils.model5_app import fran_martinez_scibert_scivocab_cased_ner_jnlpba
-from utils.model6_app import openai_community_gpt2
-from utils.model7_app import dmis_lab_biobert_v1_1
-from utils.model8_app import dslim_bert_base_NER
+from utils.chemical_disease_model import ghadeermobasher_BC5CDR_Chemical_Disease_balanced_scibert_scivocab_cased
+from utils.jsylee_scibert_model import jsylee_scibert_scivocab_uncased_finetuned_ner
+from utils.keyphrase_model import extractor
+from utils.gliner_model import EmergentMethods_gliner_medium_news_v2_1
+from utils.fran_scibert_model import fran_martinez_scibert_scivocab_cased_ner_jnlpba
+from utils.gpt2_model import openai_community_gpt2
+from utils.dmis_biobert_model import dmis_lab_biobert_v1_1
+from utils.bert_base_NER_model import dslim_bert_base_NER
 import numpy as np
 import logging
 
