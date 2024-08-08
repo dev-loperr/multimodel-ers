@@ -7,11 +7,17 @@ from utils.fran_scibert_model import fran_martinez_scibert_scivocab_cased_ner_jn
 from utils.gpt2_model import openai_community_gpt2
 from utils.dmis_biobert_model import dmis_lab_biobert_v1_1
 from utils.bert_base_NER_model import dslim_bert_base_NER
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, unset_jwt_cookies, get_jwt
+from datetime import datetime, timedelta
 import numpy as np
 import logging
+import secrets
+import string
 
 app = Flask(__name__)
-app.config['MongoDB_Connection_String'] = ''
+app.config['JWT_SECRET_KEY'] = secrets.token_hex(32)
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours = 1)
+jwt = JWTManager(app)
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s',
@@ -19,6 +25,8 @@ logging.basicConfig(level=logging.INFO,
                         logging.FileHandler("app.log"),
                         logging.StreamHandler()
                     ])
+
+blacklist = set()
 
 def convert_to_native(obj):
     if isinstance(obj, dict):
@@ -32,6 +40,12 @@ def convert_to_native(obj):
     elif isinstance(obj, np.ndarray):
         return obj.tolist()
     return obj
+
+users = {}
+
+def generate_random_string(length = 8):
+    characters = string.ascii_letters + string.digits
+    return ''.join(secrets.choice(characters) for _ in range(length))
 
 @app.errorhandler(Exception)
 def handle_exception(e):
@@ -47,6 +61,42 @@ def handle_400(e):
     logging.info(f"Bad request: {str(e)}")
     return jsonify({"error": "Bad request"}), 400
 
+@app.route('/register', methods = ['POST'])
+def register(): 
+    username = generate_random_string()
+    password = generate_random_string()
+    users[username] = password
+    return jsonify({"username": username, "password": password}), 201
+
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.json.get('username', None)
+    password = request.json.get('password', None)
+    if users.get(username) != password:
+        return jsonify({"msg": "Bad username or password"}), 401
+
+    access_token = create_access_token(identity=username)
+    return jsonify(access_token=access_token)
+
+@app.route('/protected', methods=['GET'])
+@jwt_required()
+def protected():
+    current_user = get_jwt_identity()
+    return jsonify(logged_in_as=current_user), 200
+
+@app.route('/logout', methods=['POST'])
+@jwt_required()
+def logout():
+    jti = get_jwt()['jti']
+    blacklist.add(jti)
+    response = jsonify({"msg": "Logged out successfully"})
+    unset_jwt_cookies(response)
+    return response, 200
+
+@jwt.token_in_blocklist_loader
+def check_if_token_in_blacklist(jwt_header, jwt_payload):
+    jti = jwt_payload['jti']
+    return jti in blacklist
 
 @app.route("/ghadeermobasher_BC5CDR_Chemical_Disease_balanced_scibert_scivocab_cased", methods=['POST', 'GET'])
 def ghadeermobasher_BC5CDR_Chemical_Disease_balanced_scibert_scivocab_cased_endpoint():
